@@ -1,0 +1,50 @@
+name: Build & Release Arab Client
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build with Maven + Fabric Loom
+        run: mvn clean package -B --no-transfer-progress
+
+      - name: Upload built JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: arabclient-1.0.0.jar
+          path: target/arabclient-1.0.0.jar
+          if-no-files-found: error
+
+      - name: Release to GitHub Releases (only on push to main)
+        if: github.ref == 'refs/heads/main'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            target/arabclient-1.0.0.jar
+          tag_name: v1.0.0
+          name: Arab Client 1.0.0
+          body: |
+            **Arab Client** — Minecraft 1.21.11 Fabric Utility Client  
+            - Full Click GUI (Right Shift)  
+            - Interactive HUD Settings Panel  
+            - 6 Beautiful Themes including **Arab Nebula**  
+            - Discord Presence  
+            - All modules from Combat, Render, Movement, etc.
+          draft: false
+          prerelease: false
