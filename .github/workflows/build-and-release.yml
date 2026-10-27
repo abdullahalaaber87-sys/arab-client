@@ -1,50 +1,93 @@
-name: Build & Release Arab Client
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+---
 
-jobs:
-  build-and-publish:
-    runs-on: ubuntu-latest
+## 1. `pom.xml` (Full Maven Build File)
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    <modelVersion>4.0.0</modelVersion>
 
-      - name: Set up Java 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'maven'
+    <groupId>com.arabclient</groupId>
+    <artifactId>arabclient</artifactId>
+    <version>1.0.0</version>
 
-      - name: Build with Maven + Fabric Loom
-        run: mvn clean package -B --no-transfer-progress
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <fabric.loader.version>0.16.9</fabric.loader.version>
+        <fabric.api.version>0.107.0+1.21.1</fabric.api.version>
+        <minecraft.version>1.21.11</minecraft.version>
+    </properties>
 
-      - name: Upload built JAR
-        uses: actions/upload-artifact@v4
-        with:
-          name: arabclient-1.0.0.jar
-          path: target/arabclient-1.0.0.jar
-          if-no-files-found: error
+    <repositories>
+        <repository>
+            <id>fabric</id>
+            <url>https://maven.fabricmc.net/</url>
+        </repository>
+    </repositories>
 
-      - name: Release to GitHub Releases (only on push to main)
-        if: github.ref == 'refs/heads/main'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            target/arabclient-1.0.0.jar
-          tag_name: v1.0.0
-          name: Arab Client 1.0.0
-          body: |
-            **Arab Client** — Minecraft 1.21.11 Fabric Utility Client  
-            - Full Click GUI (Right Shift)  
-            - Interactive HUD Settings Panel  
-            - 6 Beautiful Themes including **Arab Nebula**  
-            - Discord Presence  
-            - All modules from Combat, Render, Movement, etc.
-          draft: false
-          prerelease: false
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.4.2</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+
+            <!-- Fabric Loom for building the mod -->
+            <plugin>
+                <groupId>net.fabricmc</groupId>
+                <artifactId>fabric-loom-maven-plugin</artifactId>
+                <version>1.7.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>genSources</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>net.fabricmc.fabric-api</groupId>
+            <artifactId>fabric-api</artifactId>
+            <version>${fabric.api.version}</version>
+            <classifier>1.21.1</classifier>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.fabricmc</groupId>
+            <artifactId>fabric-loader</artifactId>
+            <version>${fabric.loader.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.mojang</groupId>
+            <artifactId>minecraft</artifactId>
+            <version>${minecraft.version}</version>
+            <classifier>intermediary</classifier>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.arikia.dev</groupId>
+            <artifactId>java-discord-rpc</artifactId>
+            <version>3.5.0</version>
+        </dependency>
+    </dependencies>
+
+</project>
